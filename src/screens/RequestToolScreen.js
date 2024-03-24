@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, FlatList } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import axios from 'axios';
 import { BASE_URL } from '../config';
 import { AuthContext } from '../context/AuthContext';
@@ -23,7 +23,18 @@ const RequestToolScreen = () => {
             'Authorization': `Bearer ${userInfo.token}`,
           },
         });
-        setTools(response.data.tools);
+         // Filter tools based on position_id
+      const borrowerPositionId = response.data.borrower.position_id;
+      const filteredTools = response.data.tools.filter((tool) =>
+        tool.position_keys.some((key) => key.position_id === borrowerPositionId)
+      );
+                // Create a new array with the combined string
+      const toolsWithCombinedString = filteredTools.map((tool) => ({
+        ...tool,
+        combinedString: `${tool.category.description}(${tool.type.description}): ${tool.property_number} (${tool.status.description})`,
+      }));
+      setTools(toolsWithCombinedString);
+        //setTools(response.data.tools);
       } catch (error) {
         console.error(error);
       }
@@ -51,11 +62,13 @@ const RequestToolScreen = () => {
           'Authorization': `Bearer ${token}`,
         },
       });
+  
       console.log(response.data);
     } catch (error) {
       console.error(error);
     }
   };
+  
 
   return (
     <ScrollView style={styles.container}>
@@ -91,7 +104,7 @@ const RequestToolScreen = () => {
         selectedItems={selectedItems}
         selectText="Select Tool Items"
         searchInputPlaceholderText="Search Items..."
-        displayKey="brand"
+        displayKey="combinedString"
         style={styles.multiSelect}
       />
 
