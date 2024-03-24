@@ -1,21 +1,28 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, FlatList, Button, Alert, RefreshControl } from 'react-native';
 import axios from 'axios';
 import { BASE_URL } from '../config';
 import { AuthContext } from '../context/AuthContext';
 import DatePicker from 'react-native-date-picker';
 import MultiSelect from 'react-native-multiple-select';
+import { Picker } from '@react-native-picker/picker'; 
 
 const RequestToolScreen = () => {
   const [purpose, setPurpose] = useState('');
   const [dateNeeded, setDateNeeded] = useState(new Date());
   const [dateReturn, setDateReturn] = useState(new Date());
+  const [selectedOption, setSelectedOption] = useState(null);
   const [selectedItems, setSelectedItems] = useState([]);
   const { userInfo } = useContext(AuthContext);
   const [tools, setTools] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [openR, setOpenR] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFormValid, setIsFormValid] = useState(false);
+  const [refreshing, setRefreshing] = useState(false); // State for pull-to-refresh
+  const [options, setOptions] = useState([]); // State to store options
 
   useEffect(() => {
-    // Fetch tools data
     const fetchTools = async () => {
       try {
         const response = await axios.get(`${BASE_URL}/requests`, {
@@ -23,18 +30,17 @@ const RequestToolScreen = () => {
             'Authorization': `Bearer ${userInfo.token}`,
           },
         });
-         // Filter tools based on position_id
-      const borrowerPositionId = response.data.borrower.position_id;
-      const filteredTools = response.data.tools.filter((tool) =>
-        tool.position_keys.some((key) => key.position_id === borrowerPositionId)
-      );
-                // Create a new array with the combined string
-      const toolsWithCombinedString = filteredTools.map((tool) => ({
-        ...tool,
-        combinedString: `${tool.category.description}(${tool.type.description}): ${tool.property_number} (${tool.status.description})`,
-      }));
-      setTools(toolsWithCombinedString);
-        //setTools(response.data.tools);
+
+        const borrowerPositionId = response.data.borrower.position_id;
+        const filteredTools = response.data.tools.filter((tool) =>
+          tool.position_keys.some((key) => key.position_id === borrowerPositionId)
+        );
+
+        const toolsWithCombinedString = filteredTools.map((tool) => ({
+          ...tool,
+          combinedString: `${tool.category.description}(${tool.type.description}): ${tool.property_number} (${tool.status.description})`,
+        }));
+        setTools(toolsWithCombinedString);
       } catch (error) {
         console.error(error);
       }
@@ -43,75 +49,190 @@ const RequestToolScreen = () => {
     fetchTools();
   }, [userInfo.token]);
 
-  const handleSubmit = async () => {
-    const formattedDate = dateNeeded.toISOString().split('T')[0]; // Format the date as YYYY-MM-DD
-    const formattedEDate = dateReturn.toISOString().split('T')[0]; // Format the date as YYYY-MM-DD
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/requests`, {
+          headers: {
+            'Authorization': `Bearer ${userInfo.token}`,
+          },
+        });
 
-    const data = {
-      option_id: 2, // You can set this value dynamically if needed
-      estimated_return_date: formattedEDate, // You can set this value dynamically if needed
-      purpose,
-      date_needed: formattedDate, // Use the formatted date here
-      toolItems: selectedItems,
+        setOptions(response.data.options); // Set options state with fetched data
+      } catch (error) {
+        console.error(error);
+      }
     };
 
+    fetchOptions();
+  }, [userInfo.token]);
+
+  useEffect(() => {
+    const isFilled = purpose.trim() !== '' && selectedItems.length > 0;
+    setIsFormValid(isFilled);
+  }, [purpose, selectedItems]);
+
+  const handleSubmit = async () => {
+    // Check if all required fields are filled
+    if (!isFormValid || selectedOption === null) {
+      Alert.alert('Error', 'Please fill in all the required fields.');
+      return;
+    }
+  
+    setIsSubmitting(true);
+  
+    const formattedDate = dateNeeded.toISOString().split('T')[0];
+    const formattedEDate = dateReturn.toISOString().split('T')[0];
+  
+    const data = {
+      option_id: selectedOption,
+      estimated_return_date: formattedEDate,
+      purpose,
+      date_needed: formattedDate,
+      toolItems: selectedItems,
+    };
+  
     try {
       const token = userInfo.token;
-      const response = await axios.post(`${BASE_URL}/requests`, data, {
+      await axios.post(`${BASE_URL}/requests`, data, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
   
-      console.log(response.data);
+      setPurpose('');
+      setSelectedOption([]);
+      setDateNeeded(new Date());
+      setDateReturn(new Date());
+      setSelectedItems([]);
+      setIsSubmitting(false);
+      Alert.alert('Success', 'Request submitted successfully.');
+    } catch (error) {
+      setIsSubmitting(false);
+      console.error(error);
+      if (error.response && error.response.status === 400) {
+        Alert.alert('Error', 'All selected tools must be In Stock (Please refresh the screen before requesting)');
+      } else {
+        Alert.alert('Error', 'Failed to submit request. Please try again.');
+      }
+    }
+  };
+  
+  const onRefresh = () => {
+    setRefreshing(true); // set refreshing to true to show spinner
+    // Your refresh logic here, e.g., refetch tools data
+    fetchTools().then(() => setRefreshing(false)); // once done, set refreshing to false
+  };
+
+  const fetchTools = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/requests`, {
+        headers: {
+          'Authorization': `Bearer ${userInfo.token}`,
+        },
+      });
+
+      const borrowerPositionId = response.data.borrower.position_id;
+      const filteredTools = response.data.tools.filter((tool) =>
+        tool.position_keys.some((key) => key.position_id === borrowerPositionId)
+      );
+
+      const toolsWithCombinedString = filteredTools.map((tool) => ({
+        ...tool,
+        combinedString: `${tool.category.description}(${tool.type.description}): ${tool.property_number} (${tool.status.description})`,
+      }));
+      setTools(toolsWithCombinedString);
     } catch (error) {
       console.error(error);
     }
   };
-  
+
+  const enabledTools = tools.filter(tool => tool.status_id === 1);
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.label}>Purpose:</Text>
-      <TextInput
-        style={styles.input}
-        value={purpose}
-        onChangeText={(text) => setPurpose(text)}
-      />
+    <FlatList
+      style={styles.container}
+      data={[{ key: '1' }]}
+      renderItem={({ item }) => (
+        <View>
+          <Text style={styles.label}>Select Tool Items:</Text>
+          <MultiSelect
+            hideTags
+            items={enabledTools}
+            uniqueKey="id"
+            onSelectedItemsChange={setSelectedItems}
+            selectedItems={selectedItems}
+            selectText="Search Available Equipments"
+            searchInputPlaceholderText="Search Items..."
+            displayKey="combinedString"
+            style={styles.multiSelect}
+          />
+          
+          <Text style={styles.label}>Select Option:</Text>
+          <Picker
+    selectedValue={selectedOption}
+    onValueChange={(itemValue, itemIndex) => setSelectedOption(itemValue)}>
+    <Picker.Item label="Select Option" value={null} />
+    {options.map((option) => (
+      <Picker.Item key={option.id} label={option.description} value={option.id} />
+    ))}
+  </Picker>
 
-      <Text style={styles.label}>Date needed:</Text>
-      <DatePicker
-        style={styles.datePicker}
-        date={dateNeeded}
-        onDateChange={setDateNeeded}
-        mode="date"
-      />
+          <Text style={{ color: 'black' }}>Date Needed: {dateNeeded.toISOString().split('T')[0]}</Text>
+          <Button title="Date Needed" onPress={() => setOpen(true)} />
+          <DatePicker
+            modal
+            open={open}
+            date={new Date(dateNeeded.getTime() - (480 * 60000))}
+            mode="date"
+            onConfirm={(dateNeeded) => {
+              setOpen(false);
+              setDateNeeded(dateNeeded);
+            }}
+            onCancel={() => {
+              setOpen(false);
+            }}
+          />
 
-      <Text style={styles.label}>Date return:</Text>
-      <DatePicker
-        style={styles.datePicker}
-        date={dateReturn}
-        onDateChange={setDateReturn}
-        mode="date"
-      />
+          <Text style={{ color: 'black' }}>Estimated Return Date: {dateReturn.toISOString().split('T')[0]}</Text>
+          <Button title="Estimated Return Date" onPress={() => setOpenR(true)} />
+          <DatePicker
+            modal
+            open={openR}
+            date={new Date(dateReturn.getTime() - (480 * 60000))}
+            mode="date"
+            onConfirm={(dateReturn) => {
+              setOpenR(false);
+              setDateReturn(dateReturn);
+            }}
+            onCancel={() => {
+              setOpenR(false);
+            }}
+          />
 
-      <Text style={styles.label}>Select Tool Items:</Text>
-      <MultiSelect
-        hideTags
-        items={tools}
-        uniqueKey="id"
-        onSelectedItemsChange={setSelectedItems}
-        selectedItems={selectedItems}
-        selectText="Select Tool Items"
-        searchInputPlaceholderText="Search Items..."
-        displayKey="combinedString"
-        style={styles.multiSelect}
-      />
+          <Text style={styles.label}>Purpose:</Text>
+          <TextInput
+            style={styles.input}
+            value={purpose}
+            onChangeText={(text) => setPurpose(text)}
+          />
 
-      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Submit</Text>
-      </TouchableOpacity>
-    </ScrollView>
+          <TouchableOpacity
+            style={[styles.button/*, !isFormValid && styles.disabledButton*/]}
+            onPress={handleSubmit}
+            // disabled={!isFormValid || isSubmitting}
+          >
+            <Text style={styles.buttonText}>{isSubmitting ? 'Submitting...' : 'Submit'}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+        />
+      }
+    />
   );
 };
 
@@ -141,13 +262,18 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: 'blue',
-    padding: 15,
+    padding: 25,
     borderRadius: 5,
     alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 50,
   },
   buttonText: {
     color: 'white',
     fontSize: 16,
+  },
+  disabledButton: {
+    backgroundColor: 'gray', // Apply disabled style
   },
 });
 
