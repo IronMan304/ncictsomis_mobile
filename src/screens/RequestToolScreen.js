@@ -9,8 +9,8 @@ import { Picker } from '@react-native-picker/picker';
 
 const RequestToolScreen = () => {
   const [purpose, setPurpose] = useState('');
-  const [dateNeeded, setDateNeeded] = useState(new Date());
-  const [dateReturn, setDateReturn] = useState(new Date());
+  const [dateNeeded, setDateNeeded] = useState(null);
+  const [dateReturn, setDateReturn] = useState(null);
   const [selectedOption, setSelectedOption] = useState(null);
   const [selectedItems, setSelectedItems] = useState([]);
   const { userInfo } = useContext(AuthContext);
@@ -73,11 +73,11 @@ const RequestToolScreen = () => {
   }, [purpose, selectedItems]);
 
   const handleSubmit = async () => {
-    // Check if all required fields are filled
-    if (!isFormValid || selectedOption === null) {
-      Alert.alert('Error', 'Please fill in all the required fields.');
-      return;
-    }
+   // Check if all required fields are filled, including date fields
+   if (!isFormValid || selectedOption === null || !dateNeeded || !dateReturn) {
+    Alert.alert('Error', 'Please fill in all the required fields.');
+    return;
+  }
   
     setIsSubmitting(true);
   
@@ -100,13 +100,17 @@ const RequestToolScreen = () => {
         },
       });
   
+    // Reset form fields
       setPurpose('');
       setSelectedOption([]);
-      setDateNeeded(new Date());
-      setDateReturn(new Date());
+      setDateNeeded(null); // Reset dateNeeded
+      setDateReturn(null); // Reset dateReturn
       setSelectedItems([]);
       setIsSubmitting(false);
       Alert.alert('Success', 'Request submitted successfully.');
+
+      // Refresh tools
+    fetchTools();
     } catch (error) {
       setIsSubmitting(false);
       console.error(error);
@@ -180,12 +184,14 @@ const disabledTools = tools.filter(tool => tool.status_id !== 1);
     ))}
   </Picker>
 
-          <Text style={{ color: 'black' }}>Date Needed: {dateNeeded.toISOString().split('T')[0]}</Text>
+          {/* <Text style={{ color: 'black' }}>Date Needed: {dateNeeded.toISOString().split('T')[0]}</Text> */}
+          <Text style={{ color: 'black' }}>Date Needed: {dateNeeded ? dateNeeded.toISOString().split('T')[0] : 'Select Date'}</Text>
           <Button title="Date Needed" onPress={() => setOpen(true)} />
           <DatePicker
             modal
             open={open}
-            date={new Date(dateNeeded.getTime() - (480 * 60000))}
+            //date={new Date(dateNeeded.getTime() - (480 * 60000))}
+            date={dateNeeded || new Date()} // Use new Date() if dateNeeded is null
             mode="date"
             onConfirm={(dateNeeded) => {
               setOpen(false);
@@ -196,12 +202,14 @@ const disabledTools = tools.filter(tool => tool.status_id !== 1);
             }}
           />
 
-          <Text style={{ color: 'black' }}>Estimated Return Date: {dateReturn.toISOString().split('T')[0]}</Text>
+          {/* <Text style={{ color: 'black' }}>Estimated Return Date: {dateReturn.toISOString().split('T')[0]}</Text> */}
+          <Text style={{ color: 'black' }}>Estimated Return Date: {dateReturn ? dateReturn.toISOString().split('T')[0] : 'Select Date'}</Text>
           <Button title="Estimated Return Date" onPress={() => setOpenR(true)} />
           <DatePicker
             modal
             open={openR}
-            date={new Date(dateReturn.getTime() - (480 * 60000))}
+            //date={new Date(dateReturn.getTime() - (480 * 60000))}
+            date={dateReturn || new Date()} // Use new Date() if dateNeeded is null
             mode="date"
             onConfirm={(dateReturn) => {
               setOpenR(false);
