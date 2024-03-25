@@ -6,6 +6,8 @@ import { AuthContext } from '../context/AuthContext';
 import DatePicker from 'react-native-date-picker';
 import MultiSelect from 'react-native-multiple-select';
 import { Picker } from '@react-native-picker/picker'; 
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import SectionedMultiSelect from 'react-native-sectioned-multi-select';
 
 const RequestToolScreen = () => {
   const [purpose, setPurpose] = useState('');
@@ -162,16 +164,18 @@ const disabledTools = tools.filter(tool => tool.status_id !== 1);
       renderItem={({ item }) => (
         <View>
           <Text style={styles.label}>Equipments:</Text>
-          <MultiSelect
-            hideTags
+          <SectionedMultiSelect
+         
             items={[...enabledTools, ...disabledTools.map(tool => ({ ...tool, disabled: true }))]}
             uniqueKey="id"
             onSelectedItemsChange={setSelectedItems}
             selectedItems={selectedItems}
             selectText="Select Available Equipments"
-            searchInputPlaceholderText="Search Available Equipments..."
+            searchInputPlaceholderText=""
+            searchPlaceholderText='Search Available Equipments'
             displayKey="combinedString"
             style={styles.multiSelect}
+            IconRenderer={Icon}
           />
           
           <Text style={styles.label}>Select Option:</Text>
@@ -180,7 +184,7 @@ const disabledTools = tools.filter(tool => tool.status_id !== 1);
     onValueChange={(itemValue, itemIndex) => setSelectedOption(itemValue)}>
     <Picker.Item label="Do you need an operator?" value={null} style={{ color: 'black' }}/>
     {options.map((option) => (
-      <Picker.Item key={option.id} label={option.description} value={option.id} />
+      <Picker.Item key={option.id} label={option.description} value={option.id} style={{ color: 'black' }}/>
     ))}
   </Picker>
 
