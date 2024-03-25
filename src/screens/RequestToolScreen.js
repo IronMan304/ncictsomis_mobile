@@ -148,6 +148,8 @@ const RequestToolScreen = () => {
   };
 
   const enabledTools = tools.filter(tool => tool.status_id === 1);
+  // Filter the disabled tools
+const disabledTools = tools.filter(tool => tool.status_id !== 1);
 
   return (
     <FlatList
@@ -155,15 +157,15 @@ const RequestToolScreen = () => {
       data={[{ key: '1' }]}
       renderItem={({ item }) => (
         <View>
-          <Text style={styles.label}>Select Tool Items:</Text>
+          <Text style={styles.label}>Equipments:</Text>
           <MultiSelect
             hideTags
-            items={enabledTools}
+            items={[...enabledTools, ...disabledTools.map(tool => ({ ...tool, disabled: true }))]}
             uniqueKey="id"
             onSelectedItemsChange={setSelectedItems}
             selectedItems={selectedItems}
-            selectText="Search Available Equipments"
-            searchInputPlaceholderText="Search Items..."
+            selectText="Select Available Equipments"
+            searchInputPlaceholderText="Search Available Equipments..."
             displayKey="combinedString"
             style={styles.multiSelect}
           />
@@ -172,7 +174,7 @@ const RequestToolScreen = () => {
           <Picker
     selectedValue={selectedOption}
     onValueChange={(itemValue, itemIndex) => setSelectedOption(itemValue)}>
-    <Picker.Item label="Select Option" value={null} />
+    <Picker.Item label="Do you need an operator?" value={null} style={{ color: 'black' }}/>
     {options.map((option) => (
       <Picker.Item key={option.id} label={option.description} value={option.id} />
     ))}
