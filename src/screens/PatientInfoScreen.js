@@ -6,7 +6,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import * as Animatable from 'react-native-animatable';
 import { BASE_URL } from '../config';
 
-const ProfileInfoScreen = () => {
+const ProfileInfoScreen = ({navigation}) => {
   const [profileData, setProfileData] = useState(null);
   const { userInfo, isLoading, logout, switchAccount } = useContext(AuthContext);
   const [refreshing, setRefreshing] = useState(false);
@@ -33,6 +33,10 @@ const ProfileInfoScreen = () => {
 
   const onRefresh = () => {
     fetchData();
+  };
+
+  const navigateToRequestHistory = () => {
+    navigation.navigate('RequestHistoryScreen'); // <-- Navigate to RequestHistoryScreen
   };
 
   return (
@@ -72,6 +76,9 @@ const ProfileInfoScreen = () => {
           </View>
         )}
       </Animatable.View>
+      <TouchableOpacity style={styles.historyButton} onPress={navigateToRequestHistory}>
+        <Text style={styles.historyButtonText}>Equipment Request History</Text>
+      </TouchableOpacity>
       <TouchableOpacity style={styles.logoutButton} onPress={logout}>
         <Text style={styles.logoutButtonText}>Logout</Text>
       </TouchableOpacity>
@@ -137,6 +144,18 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   logoutButtonText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  historyButton: {
+    backgroundColor: '#007aff',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    margin: 10,
+  },
+  historyButtonText: {
     color: '#ffffff',
     fontWeight: 'bold',
     fontSize: 16,

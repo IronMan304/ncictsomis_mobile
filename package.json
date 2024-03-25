@@ -20,6 +20,7 @@
     "react-native": "0.73.6",
     "react-native-animatable": "^1.4.0",
     "react-native-date-picker": "^5.0.0",
+    "react-native-ionicons": "^4.6.5",
     "react-native-loading-spinner-overlay": "^3.0.1",
     "react-native-modal-datetime-picker": "^17.1.0",
     "react-native-multiple-select": "^0.5.12",

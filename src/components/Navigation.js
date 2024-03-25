@@ -11,6 +11,7 @@ import { AuthContext } from '../context/AuthContext';
 import PatientInfoScreen from '../screens/PatientInfoScreen';
 import RequestToolScreen from '../screens/RequestToolScreen';
 import ToolSelectionScreen from '../screens/ToolSelectionScreen';
+import RequestHistoryScreen from '../screens/RequestHistoryScreen';
 // import PatientInfoScreen from '../screens/PatientInfoScreen';
 // import BookingsScreen from '../screens/BookingsScreen';
 // import ServiceResultScreen from '../screens/ServiceResultScreen';
@@ -26,9 +27,11 @@ const TabNavigator = () => (
         let iconName;
 
         if (route.name === 'Home') {
-          iconName = focused ? 'documents-outline' : 'documents';
+          iconName = focused ? 'home' : 'home-outline';
         } else if (route.name === 'Account') {
           iconName = focused ? 'person-circle' : 'person-circle-outline';
+        } else if (route.name === 'Request') {
+          iconName = focused ? 'git-pull-request' : 'git-pull-request-outline';
         }
 
         // You can return any component that you like here!
@@ -72,6 +75,7 @@ const Navigation = () => {
             }}
           />
              <Stack.Screen name="ToolSelection" component={ToolSelectionScreen} />
+             <Stack.Screen name="RequestHistoryScreen" component={RequestHistoryScreen} />
             {/* <Stack.Screen name="ServiceResultScreen" 
             component={ServiceResultScreen} 
             options={{
