@@ -12,6 +12,10 @@ import PatientInfoScreen from '../screens/PatientInfoScreen';
 import RequestToolScreen from '../screens/RequestToolScreen';
 import ToolSelectionScreen from '../screens/ToolSelectionScreen';
 import RequestHistoryScreen from '../screens/RequestHistoryScreen';
+import RequestInfoScreen from '../screens/RequestInfoScreen';
+import ServiceRequestHistory from '../screens/ServiceRequestHistory';
+import ServiceRequestInfoScreen from '../screens/ServiceRequestInfoScreen';
+import RequestServiceScreen from '../screens/RequestServiceScreen';
 // import PatientInfoScreen from '../screens/PatientInfoScreen';
 // import BookingsScreen from '../screens/BookingsScreen';
 // import ServiceResultScreen from '../screens/ServiceResultScreen';
@@ -30,8 +34,10 @@ const TabNavigator = () => (
           iconName = focused ? 'home' : 'home-outline';
         } else if (route.name === 'Account') {
           iconName = focused ? 'person-circle' : 'person-circle-outline';
-        } else if (route.name === 'Request') {
+        } else if (route.name === 'Equipment Request') {
           iconName = focused ? 'git-pull-request' : 'git-pull-request-outline';
+        } else if (route.name === 'Service Request') {
+          iconName = focused ? 'hand-left' : 'hand-left-outline';
         }
 
         // You can return any component that you like here!
@@ -40,7 +46,8 @@ const TabNavigator = () => (
     })}
   >
     <Tab.Screen name="Home" component={HomeScreen} />
-    <Tab.Screen name="Request" component={RequestToolScreen} />
+    <Tab.Screen name="Equipment Request" component={RequestToolScreen} />
+    <Tab.Screen name="Service Request" component={RequestServiceScreen} />
     <Tab.Screen name="Account" component={PatientInfoScreen} />
   </Tab.Navigator>
 );
@@ -75,7 +82,10 @@ const Navigation = () => {
             }}
           />
              <Stack.Screen name="ToolSelection" component={ToolSelectionScreen} />
-             <Stack.Screen name="RequestHistoryScreen" component={RequestHistoryScreen} />
+             <Stack.Screen name="EquipmentRequestHistoryScreen" component={RequestHistoryScreen} />
+             <Stack.Screen name="EquipmentRequestInfoScreen" component={RequestInfoScreen} />
+             <Stack.Screen name="ServiceRequestHistoryScreen" component={ServiceRequestHistory} />
+             <Stack.Screen name="ServiceRequestInfoScreen" component={ServiceRequestInfoScreen} />
             {/* <Stack.Screen name="ServiceResultScreen" 
             component={ServiceResultScreen} 
             options={{

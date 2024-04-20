@@ -96,11 +96,34 @@ const RequestToolScreen = () => {
   
     try {
       const token = userInfo.token;
-      await axios.post(`${BASE_URL}/requests`, data, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      // await axios.post(`${BASE_URL}/requests`, data, {
+      //   headers: {
+      //     'Authorization': `Bearer ${token}`,
+      //   },
+      // });
+
+      // Example using Axios for the API request
+// Example using Axios for the API request
+axios.post(`${BASE_URL}/requests`, data, {
+  headers: {
+      'Authorization': `Bearer ${token}`,
+  },
+})
+.then(function (response) {
+  // Upon successful response, trigger Livewire events or actions
+  if (response.status === 201) {
+      // Assuming 'refreshParentRequest' and 'refreshTable' are Livewire events
+      // Livewire.emit('refreshParentRequest');
+      // Livewire.emit('refreshTable');
+  } else {
+      console.error('Request failed:', response.data);
+  }
+})
+.catch(function (error) {
+  console.error('Error:', error);
+});
+
+
   
     // Reset form fields
       setPurpose('');

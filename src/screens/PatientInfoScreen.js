@@ -36,7 +36,11 @@ const ProfileInfoScreen = ({navigation}) => {
   };
 
   const navigateToRequestHistory = () => {
-    navigation.navigate('RequestHistoryScreen'); // <-- Navigate to RequestHistoryScreen
+    navigation.navigate('EquipmentRequestHistoryScreen'); // <-- Navigate to RequestHistoryScreen
+  };
+
+  const navigateToServiceRequestHistory = () => {
+    navigation.navigate('ServiceRequestHistoryScreen'); // <-- Navigate to RequestHistoryScreen
   };
 
   return (
@@ -78,6 +82,9 @@ const ProfileInfoScreen = ({navigation}) => {
       </Animatable.View>
       <TouchableOpacity style={styles.historyButton} onPress={navigateToRequestHistory}>
         <Text style={styles.historyButtonText}>Equipment Request History</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.historyButton} onPress={navigateToServiceRequestHistory}>
+        <Text style={styles.historyButtonText}>Service Request History</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.logoutButton} onPress={logout}>
         <Text style={styles.logoutButtonText}>Logout</Text>

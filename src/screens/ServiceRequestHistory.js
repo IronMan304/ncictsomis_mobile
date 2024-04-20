@@ -4,7 +4,7 @@ import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { BASE_URL } from '../config';
 
-const RequestHistoryScreen = ({navigation}) => {
+const ServiceRequestHistory = ({navigation}) => {
   const [requests, setRequests] = useState([]);
   const { userInfo, isLoading, logout, switchAccount } = useContext(AuthContext);
   const [statuses, setStatuses] = useState([]); // State to store statuses
@@ -20,9 +20,9 @@ const RequestHistoryScreen = ({navigation}) => {
             Authorization: `Bearer ${token}`,
           }
         });
-        setRequests(response.data.borrower.requests);
+        setRequests(response.data.borrower.service_requests);
       } catch (error) {
-        console.error('Error fetching requests:', error);
+        console.error('Error fetching service_requests:', error);
       }
     };
 
@@ -47,7 +47,6 @@ const RequestHistoryScreen = ({navigation}) => {
     fetchStatuses();
   }, [userInfo.token]);
 
-  
   const onRefresh = () => {
     setRefreshing(true); // Set refreshing state to true
     // Perform any additional tasks if needed before setting refreshing state to false
@@ -57,7 +56,7 @@ const RequestHistoryScreen = ({navigation}) => {
   };
 
   const navigateToRequestInfo = (item) => {
-    navigation.navigate('EquipmentRequestInfoScreen', { request: item });
+    navigation.navigate('ServiceRequestInfoScreen', { request: item });
   };
   
   const renderItem = ({ item }) => (
@@ -120,4 +119,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default RequestHistoryScreen;
+export default ServiceRequestHistory;
