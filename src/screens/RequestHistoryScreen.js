@@ -63,7 +63,7 @@ const RequestHistoryScreen = ({navigation}) => {
   const renderItem = ({ item }) => (
     <View>
       <TouchableOpacity style={styles.InfoButton} onPress={() => navigateToRequestInfo(item)}>
-        <Text style={styles.InfoButtonText}>{`Request ID: ${item.id}`}</Text>
+        <Text style={styles.InfoButtonText}>{`Request Number: ${item.request_number}`}</Text>
         {statuses.map((status) => (
           item.status_id === status.id && // Check if the status id matches the item's status id
           <Text key={status.id} style={styles.title}>{`Status: ${status.description}`}</Text>
