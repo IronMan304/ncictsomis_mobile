@@ -5,6 +5,7 @@ import { Picker } from '@react-native-picker/picker';
 import { AuthContext } from '../context/AuthContext';
 import { BASE_URL } from '../config';
 import RequestServiceConfirmationScreen from './RequestServiceConfirmationScreen'; // Import the confirmation page component
+import Icon from 'react-native-vector-icons/Ionicons';
 
 const RequestServiceScreen = () => {
   const [serviceRequests, setServiceRequests] = useState([]);
@@ -12,12 +13,11 @@ const RequestServiceScreen = () => {
   const [tools, setTools] = useState([]);
   const [services, setServices] = useState([]);
   const { userInfo } = useContext(AuthContext);
-  const [selectedService, setSelectedService] = useState(null);
   const [selectedSource, setSelectedSource] = useState(null);
   const [selectedTool, setSelectedTool] = useState(null);
   const [error, setError] = useState(null);
-const [successMessage, setSuccessMessage] = useState(null);
-const [showConfirmation, setShowConfirmation] = useState(false); // State to control displaying confirmation
+  const [successMessage, setSuccessMessage] = useState(null);
+  const [showConfirmation, setShowConfirmation] = useState(false); // State to control displaying confirmation
 
   const [newRequest, setNewRequest] = useState({
     brand: '',
@@ -54,22 +54,17 @@ const [showConfirmation, setShowConfirmation] = useState(false); // State to con
 
   const handleSubmit = async () => {
     try {
-      if (!newRequest.source_id || !newRequest.tool_id || !selectedService) {
-        setError('Please select a source, a tool, and a service before submitting.');
+      if (!newRequest.source_id || !newRequest.tool_id) {
+        setError('Please select source and tool before submitting');
         return;
       }
-      
-      const requestData = {
-        ...newRequest,
-        service_id: selectedService,
-      };
-  
-      await axios.post(`${BASE_URL}/service_requests`, requestData, {
+
+      await axios.post(`${BASE_URL}/service_requests`, newRequest, {
         headers: {
           'Authorization': `Bearer ${userInfo.token}`,
         },
       });
-  
+
       // Reset the form after submission
       setNewRequest({
         brand: '',
@@ -80,7 +75,6 @@ const [showConfirmation, setShowConfirmation] = useState(false); // State to con
         source_id: '',
         tool_id: '',
       });
-      setSelectedService(null);
       // setSuccessMessage('Request submitted successfully.');
       setError(null);
       setShowConfirmation(true); // Show confirmation page
@@ -90,7 +84,7 @@ const [showConfirmation, setShowConfirmation] = useState(false); // State to con
       //setSuccessMessage(null);
     }
   };
-  
+
   const handleConfirmationClose = () => {
     setShowConfirmation(false); // Close confirmation page
   };
@@ -116,61 +110,50 @@ const [showConfirmation, setShowConfirmation] = useState(false); // State to con
     const isOwnedByUser = tool.owner_id === userInfo.user.borrower.id;
     const isSourceCICTSO = tool.source_id === 3 && (tool.owner_id === null || tool.owner_id === undefined);
     const isInStock = tool.status_id === 1; // Check if the tool is in stock
-    return (isPersonal || isOwnedByUser || isSourceCICTSO) && isInStock && tool.source_id === newRequest.source_id;
+    return (isPersonal || isOwnedByUser || isSourceCICTSO) && tool.source_id === newRequest.source_id;
   });
-  
 
   return (
     <View style={styles.container}>
-        {showConfirmation ? (
+      {showConfirmation ? (
         <RequestServiceConfirmationScreen onClose={handleConfirmationClose} />
       ) : (
-      <View style={styles.formContainer}>
-            {/* <Text style={[styles.requestText, { color: 'black' }]}>Barcode: {userInfo.user.borrower.user_id}</Text> */}
-            <Text style={[styles.requestText, { color: 'black' }]}>Requester: {userInfo.user.first_name}</Text>
-            <Picker
-              selectedValue={newRequest.source_id}
-              style={styles.picker}
-              onValueChange={(itemValue) => handleInputChange('source_id', itemValue)}
-            >
-              <Picker.Item label="Select Source" value="" style={{ color: 'black' }} />
-              {sources.map((source) => (
-                <Picker.Item key={source.id} label={source.description} value={source.id} style={{ color: 'black' }} />
-              ))}
-            </Picker>
-            <Picker
-              selectedValue={newRequest.tool_id}
-              style={styles.picker}
-              onValueChange={(itemValue) => handleInputChange('tool_id', itemValue)}
-            >
-              <Picker.Item label="Select Tool" value="" style={{ color: 'black' }} />
-              {tools.map((tool) => (
-                <Picker.Item
-                  key={tool.id}
-                  label={`${tool.brand} - ${tool.property_number} (${tool.status.description})`}
-                  value={tool.id}
-                  enabled={tool.status_id === 1} // Enable only if status_id is 1
-                  style={{ color: tool.status_id === 1 ? 'black' : 'gray' }} // Change color for disabled items
-                />
-              ))}
-            </Picker>
-
-
-                <Picker
-            selectedValue={selectedService}
-            onValueChange={(itemValue, itemIndex) => setSelectedService(itemValue)}>
-            <Picker.Item label="Service" value={null} style={{ color: 'black' }}/>
-            {services.map((service) => (
-              <Picker.Item key={service.id} label={service.description} value={service.id} style={{ color: 'black' }}/>
+        <View style={styles.formContainer}>
+          {/* <Text style={[styles.requestText, { color: 'black' }]}>Barcode: {userInfo.user.borrower.user_id}</Text> */}
+          <Text style={[styles.requestText, { color: 'black' }]}>Requester: {userInfo.user.first_name}</Text>
+          <Picker
+            selectedValue={newRequest.source_id}
+            style={styles.picker}
+            onValueChange={(itemValue) => handleInputChange('source_id', itemValue)}
+          >
+            <Picker.Item label="Select Source" value="" style={{ color: 'black' }} />
+            {sources.map((source) => (
+              <Picker.Item key={source.id} label={source.description} value={source.id} style={{ color: 'black' }} />
             ))}
           </Picker>
-                <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-                  <Text style={[styles.submitButtonText, { color: 'black' }]}>Submit</Text>
-                </TouchableOpacity>
-                {/* // Inside the return statement, after the TouchableOpacity for submission button */}
+          <Picker
+            selectedValue={newRequest.tool_id}
+            style={styles.picker}
+            onValueChange={(itemValue) => handleInputChange('tool_id', itemValue)}
+          >
+            <Picker.Item label="Select Tool" value="" style={{ color: 'black' }} />
+            {filteredTools.map((tool) => (
+              <Picker.Item
+                key={tool.id}
+                label={`${tool.brand} - ${tool.property_number} (${tool.status.description})`}
+                value={tool.id}
+                enabled={tool.status_id === 1} // Enable only if status_id is 1
+                style={{ color: tool.status_id === 1 ? 'black' : 'gray' }} // Change color for disabled items
+              />
+            ))}
+          </Picker>
+          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+            <Text style={[styles.submitButtonText, { color: 'black' }]}>Submit</Text>
+          </TouchableOpacity>
+          {/* Inside the return statement, after the TouchableOpacity for submission button */}
           {error && <Text style={{ color: 'red' }}>{error}</Text>}
           {/* {successMessage && <Text style={{ color: 'green' }}>{successMessage}</Text>} */}
-      </View>
+        </View>
       )}
       <FlatList
         data={serviceRequests}
@@ -185,53 +168,72 @@ const [showConfirmation, setShowConfirmation] = useState(false); // State to con
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    padding: 16,
+    backgroundColor: '#f4f4f4',
   },
   formContainer: {
-    marginBottom: 16,
-  },
-  picker: {
-    marginBottom: 8,
-  },
-  submitButton: {
-    backgroundColor: '#2196F3',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  submitButtonText: {
-    fontWeight: 'bold',
-  },
-  listContainer: {
-    paddingVertical: 8,
+    padding: 20,
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    margin: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   requestItem: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
+    backgroundColor: '#ffffff',
+    padding: 20,
+    marginVertical: 8,
+    marginHorizontal: 16,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
     elevation: 2,
-    marginBottom: 16,
-    padding: 16,
   },
   requestItemHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   requestItemTitle: {
     fontSize: 18,
     fontWeight: 'bold',
   },
   requestItemStatus: {
-    fontSize: 16,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#4caf50',
   },
   requestItemDetails: {
-    flexDirection: 'column',
+    borderTopColor: '#e0e0e0',
+    borderTopWidth: 1,
+    paddingTop: 10,
   },
   requestText: {
     fontSize: 16,
-    marginBottom: 4,
+    marginBottom: 5,
+  },
+  picker: {
+    marginBottom: 20,
+    backgroundColor: '#e0e0e0',
+    borderRadius: 10,
+  },
+  submitButton: {
+    backgroundColor: '#2196f3',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  submitButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ffffff',
+  },
+  listContainer: {
+    paddingBottom: 20,
   },
 });
 
