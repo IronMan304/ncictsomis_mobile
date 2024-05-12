@@ -6,6 +6,7 @@ import { AuthContext } from '../context/AuthContext';
 import { BASE_URL } from '../config';
 import RequestServiceConfirmationScreen from './RequestServiceConfirmationScreen'; // Import the confirmation page component
 import Icon from 'react-native-vector-icons/Ionicons';
+import { useFocusEffect } from '@react-navigation/native'; // Import useFocusEffect hook
 
 const RequestServiceScreen = () => {
   const [serviceRequests, setServiceRequests] = useState([]);
@@ -47,6 +48,12 @@ const RequestServiceScreen = () => {
       console.error('Error fetching sources:', error);
     }
   };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchSources();
+    }, [])
+  );
 
   const handleInputChange = (key, value) => {
     setNewRequest({ ...newRequest, [key]: value });

@@ -9,6 +9,7 @@ import { Picker } from '@react-native-picker/picker';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import SectionedMultiSelect from 'react-native-sectioned-multi-select';
 import RequestToolConfirmationScreen from './RequestToolConfirmationScreen';
+import { useFocusEffect } from '@react-navigation/native'; // Import useFocusEffect hook
 
 const RequestToolScreen = () => {
   const [purpose, setPurpose] = useState('');
@@ -24,136 +25,9 @@ const RequestToolScreen = () => {
   const [isFormValid, setIsFormValid] = useState(false);
   const [refreshing, setRefreshing] = useState(false); // State for pull-to-refresh
   const [options, setOptions] = useState([]); // State to store options
+  const [showConfirmation, setShowConfirmation] = useState(false); // State to control displaying confirmation
 
-  useEffect(() => {
-    const fetchTools = async () => {
-      try {
-        const response = await axios.get(`${BASE_URL}/requests`, {
-          headers: {
-            'Authorization': `Bearer ${userInfo.token}`,
-          },
-        });
-
-        const borrowerPositionId = response.data.borrower.position_id;
-        const filteredTools = response.data.tools.filter((tool) =>
-          tool.position_keys.some((key) => key.position_id === borrowerPositionId)
-        );
-
-        const toolsWithCombinedString = filteredTools.map((tool) => ({
-          ...tool,
-          combinedString: `${tool.category.description}(${tool.type.description}): ${tool.property_number} (${tool.status.description})`,
-        }));
-        setTools(toolsWithCombinedString);
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    fetchTools();
-  }, [userInfo.token]);
-
-  useEffect(() => {
-    const fetchOptions = async () => {
-      try {
-        const response = await axios.get(`${BASE_URL}/requests`, {
-          headers: {
-            'Authorization': `Bearer ${userInfo.token}`,
-          },
-        });
-
-        setOptions(response.data.options); // Set options state with fetched data
-      } catch (error) {
-        console.error(error);
-      }
-    };
-
-    fetchOptions();
-  }, [userInfo.token]);
-
-  useEffect(() => {
-    const isFilled = purpose.trim() !== '' && selectedItems.length > 0;
-    setIsFormValid(isFilled);
-  }, [purpose, selectedItems]);
-
-  const handleSubmit = async () => {
-   // Check if all required fields are filled, including date fields
-   if (!isFormValid || selectedOption === null || !dateNeeded || !dateReturn) {
-    Alert.alert('Error', 'Please fill in all the required fields.');
-    return;
-  }
-  
-    setIsSubmitting(true);
-  
-    const formattedDate = dateNeeded.toISOString().split('T')[0];
-    const formattedEDate = dateReturn.toISOString().split('T')[0];
-  
-    const data = {
-      option_id: selectedOption,
-      estimated_return_date: formattedEDate,
-      purpose,
-      date_needed: formattedDate,
-      toolItems: selectedItems,
-    };
-  
-    try {
-      const token = userInfo.token;
-      // await axios.post(`${BASE_URL}/requests`, data, {
-      //   headers: {
-      //     'Authorization': `Bearer ${token}`,
-      //   },
-      // });
-
-      // Example using Axios for the API request
-// Example using Axios for the API request
-axios.post(`${BASE_URL}/requests`, data, {
-  headers: {
-      'Authorization': `Bearer ${token}`,
-  },
-})
-.then(function (response) {
-  // Upon successful response, trigger Livewire events or actions
-  if (response.status === 201) {
-      // Assuming 'refreshParentRequest' and 'refreshTable' are Livewire events
-      // Livewire.emit('refreshParentRequest');
-      // Livewire.emit('refreshTable');
-  } else {
-      console.error('Request failed:', response.data);
-  }
-})
-.catch(function (error) {
-  console.error('Error:', error);
-});
-
-
-  
-    // Reset form fields
-      setPurpose('');
-      setSelectedOption([]);
-      setDateNeeded(null); // Reset dateNeeded
-      setDateReturn(null); // Reset dateReturn
-      setSelectedItems([]);
-      setIsSubmitting(false);
-      Alert.alert('Success', 'Request submitted successfully.');
-
-      // Refresh tools
-    fetchTools();
-    } catch (error) {
-      setIsSubmitting(false);
-      console.error(error);
-      if (error.response && error.response.status === 400) {
-        Alert.alert('Error', 'All selected tools must be In Stock (Please refresh the screen before requesting)');
-      } else {
-        Alert.alert('Error', 'Failed to submit request. Please try again.');
-      }
-    }
-  };
-  
-  const onRefresh = () => {
-    setRefreshing(true); // set refreshing to true to show spinner
-    // Your refresh logic here, e.g., refetch tools data
-    fetchTools().then(() => setRefreshing(false)); // once done, set refreshing to false
-  };
-
+  // Function to fetch tools
   const fetchTools = async () => {
     try {
       const response = await axios.get(`${BASE_URL}/requests`, {
@@ -177,11 +51,155 @@ axios.post(`${BASE_URL}/requests`, data, {
     }
   };
 
+    // Function to fetch options
+    const fetchOptions = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/requests`, {
+          headers: {
+            'Authorization': `Bearer ${userInfo.token}`,
+          },
+        });
+  
+        setOptions(response.data.options); // Set options state with fetched data
+      } catch (error) {
+        console.error(error);
+      }
+    };
+  
+    useEffect(() => {
+      fetchTools();
+      fetchOptions();
+    }, [userInfo.token]);
+
+  useEffect(() => {
+    const isFilled = purpose.trim() !== '' && selectedItems.length > 0;
+    setIsFormValid(isFilled);
+  }, [purpose, selectedItems]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchTools();
+      fetchOptions();
+    }, [])
+  );
+
+  const handleSubmit = async () => {
+   // Check if all required fields are filled, including date fields
+   if (!isFormValid || selectedOption === null || !dateNeeded || !dateReturn) {
+    Alert.alert('Error', 'Please fill in all the required fields.');
+    return;
+  }
+  
+    setIsSubmitting(true);
+    //setShowConfirmation(true); // Show confirmation page
+  
+    const formattedDate = dateNeeded.toISOString().split('T')[0];
+    const formattedEDate = dateReturn.toISOString().split('T')[0];
+  
+    const data = {
+      option_id: selectedOption,
+      estimated_return_date: formattedEDate,
+      purpose,
+      date_needed: formattedDate,
+      toolItems: selectedItems,
+    };
+  
+    try {
+      const token = userInfo.token;
+      // await axios.post(`${BASE_URL}/requests`, data, {
+      //   headers: {
+      //     'Authorization': `Bearer ${token}`,
+      //   },
+      // });
+
+            // Example using Axios for the API request
+      // Example using Axios for the API request
+      axios.post(`${BASE_URL}/requests`, data, {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+      })
+      .then(function (response) {
+        // Upon successful response, trigger Livewire events or actions
+        if (response.status === 201) {
+            // Assuming 'refreshParentRequest' and 'refreshTable' are Livewire events
+            // Livewire.emit('refreshParentRequest');
+            // Livewire.emit('refreshTable');
+        } else {
+            console.error('Request failed:', response.data);
+        }
+      })
+      .catch(function (error) {
+        console.error('Error:', error);
+      });
+
+      setShowConfirmation(true); // Show confirmation page after successful submission
+  
+    // Reset form fields
+      setPurpose('');
+      setSelectedOption([]);
+      setDateNeeded(null); // Reset dateNeeded
+      setDateReturn(null); // Reset dateReturn
+      setSelectedItems([]);
+      setIsSubmitting(false);
+      //Alert.alert('Success', 'Request submitted successfully.');
+      //setShowConfirmation(true); // Show confirmation page
+
+      // Refresh tools
+    fetchTools();
+    } catch (error) {
+      setIsSubmitting(false);
+      console.error(error);
+      if (error.response && error.response.status === 400) {
+        Alert.alert('Error', 'All selected tools must be In Stock (Please refresh the screen before requesting)');
+      } else {
+        Alert.alert('Error', 'Failed to submit request. Please try again.');
+      }
+    }
+  };
+  
+  const handleConfirmationClose = () => {
+    setShowConfirmation(false); // Close confirmation page
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true); // set refreshing to true to show spinner
+    // Your refresh logic here, e.g., refetch tools data
+    fetchTools().then(() => setRefreshing(false)); // once done, set refreshing to false
+  };
+
+  // const fetchTools = async () => {
+  //   try {
+  //     const response = await axios.get(`${BASE_URL}/requests`, {
+  //       headers: {
+  //         'Authorization': `Bearer ${userInfo.token}`,
+  //       },
+  //     });
+
+  //     const borrowerPositionId = response.data.borrower.position_id;
+  //     const filteredTools = response.data.tools.filter((tool) =>
+  //       tool.position_keys.some((key) => key.position_id === borrowerPositionId)
+  //     );
+
+  //     const toolsWithCombinedString = filteredTools.map((tool) => ({
+  //       ...tool,
+  //       combinedString: `${tool.category.description}(${tool.type.description}): ${tool.property_number} (${tool.status.description})`,
+  //     }));
+  //     setTools(toolsWithCombinedString);
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
+
   const enabledTools = tools.filter(tool => tool.status_id === 1);
   // Filter the disabled tools
 const disabledTools = tools.filter(tool => tool.status_id !== 1);
 
   return (
+    <>
+    {showConfirmation ? (
+      <RequestToolConfirmationScreen onClose={handleConfirmationClose} />
+    ) : (
     <FlatList
       style={styles.container}
       data={[{ key: '1' }]}
@@ -202,15 +220,15 @@ const disabledTools = tools.filter(tool => tool.status_id !== 1);
             IconRenderer={Icon}
           />
           
-          <Text style={styles.label}>Select Option:</Text>
-          <Picker
-    selectedValue={selectedOption}
-    onValueChange={(itemValue, itemIndex) => setSelectedOption(itemValue)}>
-    <Picker.Item label="Do you need an operator?" value={null} style={{ color: 'black' }}/>
-    {options.map((option) => (
-      <Picker.Item key={option.id} label={option.description} value={option.id} style={{ color: 'black' }}/>
-    ))}
-  </Picker>
+                <Text style={styles.label}>Select Option:</Text>
+                <Picker
+          selectedValue={selectedOption}
+          onValueChange={(itemValue, itemIndex) => setSelectedOption(itemValue)}>
+          <Picker.Item label="Do you need an operator?" value={null} style={{ color: 'black' }}/>
+          {options.map((option) => (
+            <Picker.Item key={option.id} label={option.description} value={option.id} style={{ color: 'black' }}/>
+          ))}
+        </Picker>
 
           {/* <Text style={{ color: 'black' }}>Date Needed: {dateNeeded.toISOString().split('T')[0]}</Text> */}
           <Text style={{ color: 'black' }}>Date Needed: {dateNeeded ? dateNeeded.toISOString().split('T')[0] : 'Select Date'}</Text>
@@ -271,6 +289,8 @@ const disabledTools = tools.filter(tool => tool.status_id !== 1);
         />
       }
     />
+    )}
+     </>
   );
 };
 
