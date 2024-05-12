@@ -33,6 +33,20 @@ const ServiceRequestInfoScreen = ({ route }) => {
           <Text style={styles.text}>{request.id}</Text>
         </View>
         <View style={styles.row}>
+          <Text style={styles.label}>Date Requested:</Text>
+          <Text style={styles.text}>
+            {new Date(request.created_at).toLocaleString('en-US', {
+              timeZone: 'Asia/Manila',
+              month: '2-digit',
+              day: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            })}
+          </Text>
+        </View>
+        <View style={styles.row}>
           <Text style={styles.label}>Requester:</Text>
           <Text style={styles.text}>{request.borrower.first_name}</Text>
         </View>
@@ -52,20 +66,7 @@ const ServiceRequestInfoScreen = ({ route }) => {
           </Text>
         </View>
 
-        <View style={styles.row}>
-          <Text style={styles.label}>Requested Date:</Text>
-          <Text style={styles.text}>
-            {new Date(request.created_at).toLocaleString('en-US', {
-              timeZone: 'Asia/Manila',
-              month: '2-digit',
-              day: '2-digit',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: true
-            })}
-          </Text>
-        </View>
+       
 
         <View style={styles.row}>
           <Text style={styles.label}>Operator:</Text>

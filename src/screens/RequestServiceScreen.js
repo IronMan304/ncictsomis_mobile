@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Picker } from '@react-native-picker/picker';
 import { AuthContext } from '../context/AuthContext';
 import { BASE_URL } from '../config';
+import RequestServiceConfirmationScreen from './RequestServiceConfirmationScreen'; // Import the confirmation page component
 
 const RequestServiceScreen = () => {
   const [serviceRequests, setServiceRequests] = useState([]);
@@ -16,6 +17,7 @@ const RequestServiceScreen = () => {
   const [selectedTool, setSelectedTool] = useState(null);
   const [error, setError] = useState(null);
 const [successMessage, setSuccessMessage] = useState(null);
+const [showConfirmation, setShowConfirmation] = useState(false); // State to control displaying confirmation
 
   const [newRequest, setNewRequest] = useState({
     brand: '',
@@ -79,18 +81,19 @@ const [successMessage, setSuccessMessage] = useState(null);
         tool_id: '',
       });
       setSelectedService(null);
-      setSuccessMessage('Request submitted successfully.');
+      // setSuccessMessage('Request submitted successfully.');
       setError(null);
+      setShowConfirmation(true); // Show confirmation page
     } catch (error) {
       console.error('Error submitting service request:', error);
       setError('Failed to submit request. Please try again.');
-      setSuccessMessage(null);
+      //setSuccessMessage(null);
     }
   };
   
-
-  
-  
+  const handleConfirmationClose = () => {
+    setShowConfirmation(false); // Close confirmation page
+  };
 
   const renderItem = ({ item }) => (
     <View style={styles.requestItem}>
@@ -119,52 +122,56 @@ const [successMessage, setSuccessMessage] = useState(null);
 
   return (
     <View style={styles.container}>
+        {showConfirmation ? (
+        <RequestServiceConfirmationScreen onClose={handleConfirmationClose} />
+      ) : (
       <View style={styles.formContainer}>
-      {/* <Text style={[styles.requestText, { color: 'black' }]}>Barcode: {userInfo.user.borrower.user_id}</Text> */}
-      <Text style={[styles.requestText, { color: 'black' }]}>Requester: {userInfo.user.first_name}</Text>
-        <Picker
-          selectedValue={newRequest.source_id}
-          style={styles.picker}
-          onValueChange={(itemValue) => handleInputChange('source_id', itemValue)}
-        >
-          <Picker.Item label="Select Source" value="" style={{ color: 'black' }} />
-          {sources.map((source) => (
-            <Picker.Item key={source.id} label={source.description} value={source.id} style={{ color: 'black' }} />
-          ))}
-        </Picker>
-        <Picker
-  selectedValue={newRequest.tool_id}
-  style={styles.picker}
-  onValueChange={(itemValue) => handleInputChange('tool_id', itemValue)}
->
-  <Picker.Item label="Select Tool" value="" style={{ color: 'black' }} />
-  {tools.map((tool) => (
-    <Picker.Item
-      key={tool.id}
-      label={`${tool.brand} - ${tool.property_number} (${tool.status.description})`}
-      value={tool.id}
-      enabled={tool.status_id === 1} // Enable only if status_id is 1
-      style={{ color: tool.status_id === 1 ? 'black' : 'gray' }} // Change color for disabled items
-    />
-  ))}
-</Picker>
+            {/* <Text style={[styles.requestText, { color: 'black' }]}>Barcode: {userInfo.user.borrower.user_id}</Text> */}
+            <Text style={[styles.requestText, { color: 'black' }]}>Requester: {userInfo.user.first_name}</Text>
+            <Picker
+              selectedValue={newRequest.source_id}
+              style={styles.picker}
+              onValueChange={(itemValue) => handleInputChange('source_id', itemValue)}
+            >
+              <Picker.Item label="Select Source" value="" style={{ color: 'black' }} />
+              {sources.map((source) => (
+                <Picker.Item key={source.id} label={source.description} value={source.id} style={{ color: 'black' }} />
+              ))}
+            </Picker>
+            <Picker
+              selectedValue={newRequest.tool_id}
+              style={styles.picker}
+              onValueChange={(itemValue) => handleInputChange('tool_id', itemValue)}
+            >
+              <Picker.Item label="Select Tool" value="" style={{ color: 'black' }} />
+              {tools.map((tool) => (
+                <Picker.Item
+                  key={tool.id}
+                  label={`${tool.brand} - ${tool.property_number} (${tool.status.description})`}
+                  value={tool.id}
+                  enabled={tool.status_id === 1} // Enable only if status_id is 1
+                  style={{ color: tool.status_id === 1 ? 'black' : 'gray' }} // Change color for disabled items
+                />
+              ))}
+            </Picker>
 
 
-        <Picker
-    selectedValue={selectedService}
-    onValueChange={(itemValue, itemIndex) => setSelectedService(itemValue)}>
-    <Picker.Item label="Service" value={null} style={{ color: 'black' }}/>
-    {services.map((service) => (
-      <Picker.Item key={service.id} label={service.description} value={service.id} style={{ color: 'black' }}/>
-    ))}
-  </Picker>
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-          <Text style={[styles.submitButtonText, { color: 'black' }]}>Submit</Text>
-        </TouchableOpacity>
-        {/* // Inside the return statement, after the TouchableOpacity for submission button */}
-  {error && <Text style={{ color: 'red' }}>{error}</Text>}
-  {successMessage && <Text style={{ color: 'green' }}>{successMessage}</Text>}
+                <Picker
+            selectedValue={selectedService}
+            onValueChange={(itemValue, itemIndex) => setSelectedService(itemValue)}>
+            <Picker.Item label="Service" value={null} style={{ color: 'black' }}/>
+            {services.map((service) => (
+              <Picker.Item key={service.id} label={service.description} value={service.id} style={{ color: 'black' }}/>
+            ))}
+          </Picker>
+                <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+                  <Text style={[styles.submitButtonText, { color: 'black' }]}>Submit</Text>
+                </TouchableOpacity>
+                {/* // Inside the return statement, after the TouchableOpacity for submission button */}
+          {error && <Text style={{ color: 'red' }}>{error}</Text>}
+          {/* {successMessage && <Text style={{ color: 'green' }}>{successMessage}</Text>} */}
       </View>
+      )}
       <FlatList
         data={serviceRequests}
         keyExtractor={(item) => item.id.toString()}
