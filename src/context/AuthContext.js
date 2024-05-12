@@ -20,7 +20,13 @@ export const AuthProvider = ({ children }) => {
       })
       .then((res) => {
         let user = res.data;
+         // Check if the user has the required role
+      if (user.roles.includes('student') || user.roles.includes('faculty') || user.roles.includes('guest')) {
         setUserInfo(user);
+      } else {
+        setError('Unauthorized access'); // Error message for unauthorized access
+        setUserInfo(null); // Clear user info
+      }
         setIsLoading(false);
       })
       .catch((error) => {
@@ -28,7 +34,8 @@ export const AuthProvider = ({ children }) => {
           // Handle wrong credentials here
           setError('Wrong credentials');
           console.log('Wrong credentials');
-        } else {
+        } else if (error.response && (error.response.status === 403)) {
+          setError('Unauthorized access');
           console.log(`login error: ${error}`);
         }
         setIsLoading(false);
