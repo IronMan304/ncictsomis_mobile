@@ -7,6 +7,6 @@
 
 //export const BASE_URL = 'http://ncictso1.000.pe/api';
 
-export const BASE_URL = 'http://ncictso.online/api';
+export const BASE_URL = 'https://ncictso.online/api';
 
 

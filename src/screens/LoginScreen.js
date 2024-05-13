@@ -14,7 +14,7 @@ const LoginScreen = ({ navigation }) => {
       <View style={styles.wrapper}>
         <View style={styles.header}>
           <Image
-            source={require('../top-logo.png')} // Update the path accordingly
+            source={require('../norsu.png')} // Update the path accordingly
             style={styles.logo1}
           />
           <Image
