@@ -7,27 +7,22 @@ const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { isLoading, login, error } = useContext(AuthContext);
-  
 
   return (
     <View style={styles.container}>
-      {/* <Text style={styles.companyName}>DIAGCARE</Text> */}
       <Spinner visible={isLoading} textContent={'Loading...'} textStyle={styles.spinnerText} />
       <View style={styles.wrapper}>
-        {/* <Text style={styles.title}>Laboratory Login</Text> */}
-        {/* <Image
-      source={require('../logo.png')} // Update the path accordingly
-      style={styles.logo}
-    /> */}
-    <View style={styles.header}>
-    <Image
-      source={require('../ncictso.png')} // Update the path accordingly
-      style={styles.logo1}
-    />
-    </View>
-   
-    {/* <Text style={styles.companyName}>DIAGCARE</Text> */}
-
+        <View style={styles.header}>
+          <Image
+            source={require('../top-logo.png')} // Update the path accordingly
+            style={styles.logo1}
+          />
+          <Image
+            source={require('../ncictso.png')} // Update the path accordingly
+            style={styles.logo2}
+          />
+        </View>
+        <Text style={styles.loginWork}>NORSU CICTSO</Text> 
         <View>
           <TextInput
             style={styles.input}
@@ -40,6 +35,7 @@ const LoginScreen = ({ navigation }) => {
           ) : null}
         </View>
 
+       
 
         <TextInput
           style={styles.input}
@@ -55,15 +51,8 @@ const LoginScreen = ({ navigation }) => {
             login(email, password);
           }}
         >
-          <Text style={styles.buttonText}>Login</Text>
+          <Text style={styles.buttonText}>Login</Text> 
         </TouchableOpacity>
-
-        {/* <View style={styles.registerContainer}>
-          <Text style={styles.registerText}>Don't have an account?</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-            <Text style={styles.link}>Register here</Text>
-          </TouchableOpacity>
-        </View> */}
       </View>
     </View>
   );
@@ -76,26 +65,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#f5f5f5', // Light background color
   },
-  companyName: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-    color: '#2196F3'
-  },
   wrapper: {
-    width: '80%',
+    width: '90%',
     padding: 20,
     backgroundColor: '#E1F5FE', // Light blue background for the form in light mode
     borderRadius: 10,
     elevation: 3,
-  },
-  
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
   },
   input: {
     marginBottom: 12,
@@ -117,45 +92,38 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
-  registerContainer: {
-    flexDirection: 'row',
-    marginTop: 20,
-    justifyContent: 'center',
-  },
-  registerText: {
-    marginRight: 5,
-  },
-  link: {
-    color: '#2196F3', // Blue color for the register link
-  },
-  spinnerText: {
-    color: '#000',
-  },
   errorText: {
     color: 'red',
     fontSize: 10,
     marginTop: -10,
     marginBottom: 8
   },
-  logo: {
-    width: 100, // Set the width of your logo
-    height: 100, // Set the height of your logo
-    resizeMode: 'contain', // Adjust the resizeMode as needed
-    marginBottom: 20, // Add margin as needed
-  },
   logo1: {
-    width: 260, // Set the width of your logo
-    height: 100, // Set the height of your logo
-    // resizeMode: 'contain', // Adjust the resizeMode as needed
-    // marginBottom: 20, // Add margin as needed
+    width: 270, // Set the width of your square logo
+    height: 150, // Set the height of your square logo
     resizeMode: 'contain', // Adjust the resizeMode as needed
-    //marginRight: 10, // Add margin as needed
+    marginRight: -22, 
+    marginLeft: 15, 
+  },
+  logo2: {
+    width: 100, // Set the width of your circle logo
+    height: 82, // Set the height of your circle logo
+    resizeMode: 'contain', // Adjust the resizeMode as needed
+    marginTop: 8
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center', // Center the content horizontally
+    justifyContent: 'center', // Center logos horizontally
+    alignItems: 'center', // Center logos vertically
     marginBottom: 20,
+  },
+  loginWork: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    marginTop: -40,
+    color: 'black',
+    textAlign: 'center', // Centering the text
   },
 });
 

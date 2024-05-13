@@ -23,6 +23,7 @@ const RequestServiceScreen = () => {
   const [showConfirmation, setShowConfirmation] = useState(false); // State to control displaying confirmation
   const [selectedItems, setSelectedItems] = useState([]); // State to store selected tools
   const [refreshing, setRefreshing] = useState(false); // State for pull-to-refresh
+  const [isSubmitting, setSubmitting] = useState(false);
 
   const [newRequest, setNewRequest] = useState({
     brand: '',
@@ -96,6 +97,7 @@ const RequestServiceScreen = () => {
 
   const handleSubmit = async () => {
     try {
+      setSubmitting(false);
       if (!newRequest.source_id || !newRequest.tool_id) {
         Alert.alert('Error', 'Please select source and tool before submitting');
         return;
@@ -119,6 +121,7 @@ const RequestServiceScreen = () => {
       });
       setError(null);
       setShowConfirmation(true); // Show confirmation page
+      setSubmitting(false);
     } catch (error) {
       console.error('Error submitting service request:', error);
       if (error.response && error.response.status === 400) {
@@ -126,6 +129,7 @@ const RequestServiceScreen = () => {
       } else {
         Alert.alert('Error', 'Failed to submit request. Please try again.');
       }
+      setSubmitting(false);
     }
   };
   
@@ -176,8 +180,37 @@ const disabledTools = filteredTools.filter(tool => tool.status_id !== 1);
       ) : (
         <View style={styles.formContainer}>
           {/* <Text style={[styles.requestText, { color: 'black' }]}>Barcode: {userInfo.user.borrower.user_id}</Text> */}
-          <Text style={[styles.requestText, { color: 'black' }]}>Requester: {userInfo.user.first_name}</Text>
-          <Picker
+          {/* <Text style={[styles.requestText, { color: 'black' }]}>Requester: {userInfo.user.first_name}</Text> */}
+
+          <SectionedMultiSelect
+            items={sources}
+            uniqueKey="id"
+            onSelectedItemsChange={(selectedSourceId) => handleInputChange('source_id', selectedSourceId[0])}
+            selectedItems={[newRequest.source_id]}
+            selectText="Select Equipment Sources"
+            searchInputPlaceholderText=""
+            searchPlaceholderText="Search Equipment Sources"
+            displayKey="description"
+            styles={{
+              searchTextInput: {
+                color: 'black'
+              },
+            }}
+            IconRenderer={Icon}
+            single
+            iconStyle={styles.iconStyle}
+          >
+            {sources.map((source) => (
+              <Picker.Item
+                key={source.id}
+                label={source.description}
+                value={source.id}
+                style={{ color: 'black' }}
+              />
+            ))}
+          </SectionedMultiSelect>
+
+          {/* <Picker
             selectedValue={newRequest.source_id}
             style={styles.picker}
             onValueChange={(itemValue) => handleInputChange('source_id', itemValue)}
@@ -186,7 +219,7 @@ const disabledTools = filteredTools.filter(tool => tool.status_id !== 1);
             {sources.map((source) => (
               <Picker.Item key={source.id} label={source.description} value={source.id} style={{ color: 'black' }} />
             ))}
-          </Picker>
+          </Picker> */}
           {/* <Picker
             selectedValue={newRequest.tool_id}
             style={styles.picker}
@@ -207,7 +240,7 @@ const disabledTools = filteredTools.filter(tool => tool.status_id !== 1);
           <SectionedMultiSelect
            items={[...enabledTools, ...disabledTools.map(tool => ({ ...tool, disabled: true }))]}
            uniqueKey="id"
-           onSelectedItemsChange={(selectedItemId) => handleInputChange('tool_id', selectedItemId[0])}
+           onSelectedItemsChange={(selectedEquipmentId) => handleInputChange('tool_id', selectedEquipmentId[0])}
            //      
            selectedItems={[newRequest.tool_id]}
            selectText="Select Equipment to be Repaired"
@@ -218,28 +251,14 @@ const disabledTools = filteredTools.filter(tool => tool.status_id !== 1);
             searchTextInput: {
               color: 'black'
             },
-            searchIcon: {
-              color: "black", // Change the color of the search icon to black
-            },
-            chipIcon: {
-              color: "black", // Change the color of the chips icon to black
-            },
-            arrowIcon: {
-              color: "black", // Change the color of the arrow icon to black
-            },
-            removeIcon: {
-              color: "black", // Change the color of the remove icon to black
-            },
-            searchIconContainer: {
-              backgroundColor: "transparent", // Set the background color of the search icon container to transparent
-            },
            }}
            IconRenderer={Icon}
            single
            iconStyle={styles.iconStyle}
           />
           <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={[styles.submitButtonText, { color: 'black' }]}>Submit</Text>
+            {/* <Text style={[styles.submitButtonText, { color: 'black' }]}>Submit</Text> */}
+            <Text style={[styles.submitButtonText, { color: 'black' }]}>{isSubmitting ? 'Submitting...' : 'Submit'}</Text>
           </TouchableOpacity>
           {/* Inside the return statement, after the TouchableOpacity for submission button */}
           {error && <Text style={{ color: 'red' }}>{error}</Text>}

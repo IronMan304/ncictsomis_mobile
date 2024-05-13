@@ -88,7 +88,7 @@ const RequestToolScreen = () => {
 
   const handleSubmit = async () => {
    // Check if all required fields are filled, including date fields
-   if (!isFormValid || selectedOption === null || !dateNeeded || !dateReturn) {
+   if (!isFormValid || !selectedOption || !dateNeeded || !dateReturn) {
     Alert.alert('Error', 'Please fill in all the required fields.');
     return;
   }
@@ -189,144 +189,232 @@ const RequestToolScreen = () => {
   // Filter the disabled tools
 const disabledTools = tools.filter(tool => tool.status_id !== 1);
 
-  return (
-    <>
+return (
+  <>
     {showConfirmation ? (
       <RequestToolConfirmationScreen onClose={handleConfirmationClose} />
     ) : (
-    <FlatList
-      style={styles.container}
-      data={[{ key: '1' }]}
-      renderItem={({ item }) => (
-        <View>
-          <Text style={styles.label}>Equipments:</Text>
-          <SectionedMultiSelect
-         
-            items={[...enabledTools, ...disabledTools.map(tool => ({ ...tool, disabled: true }))]}
-            uniqueKey="id"
-            onSelectedItemsChange={setSelectedItems}
-            selectedItems={selectedItems}
-            selectText="Select Available Equipments"
-            searchInputPlaceholderText=""
-            searchPlaceholderText='Search Available Equipments'
-            displayKey="combinedString"
-            style={styles.multiSelect}
-            IconRenderer={Icon}
-          />
+      <FlatList
+        style={styles.container}
+        data={[{ key: '1' }]}
+        renderItem={({ item }) => (
+          <View style={styles.card}>
+            {/* <Text style={styles.label}>Equipments:</Text> */}
+            <SectionedMultiSelect
+              items={[...enabledTools, ...disabledTools.map(tool => ({ ...tool, disabled: true }))]}
+              uniqueKey="id"
+              onSelectedItemsChange={setSelectedItems}
+              selectedItems={selectedItems}
+              selectText="Select Equipments to be Borrowed"
+              searchInputPlaceholderText=""
+              searchPlaceholderText='Search Equipment'
+              displayKey="combinedString"
+              style={styles.multiSelect}
+              IconRenderer={Icon}
+            />
+
+            {/* <Text style={styles.label}>Select Option:</Text> */}
+            {/* <Picker
+              selectedValue={selectedOption}
+              onValueChange={(itemValue, itemIndex) => setSelectedOption(itemValue)}
+              style={styles.picker}
+            >
+              <Picker.Item label="Do you need an operator?" value={null} style={{ color: 'black' }}/>
+              {options.map((option) => (
+                <Picker.Item key={option.id} label={option.description} value={option.id} style={{ color: 'black' }}/>
+              ))}
+            </Picker> */}
+
           
-                <Text style={styles.label}>Select Option:</Text>
-                <Picker
-          selectedValue={selectedOption}
-          onValueChange={(itemValue, itemIndex) => setSelectedOption(itemValue)}>
-          <Picker.Item label="Do you need an operator?" value={null} style={{ color: 'black' }}/>
-          {options.map((option) => (
-            <Picker.Item key={option.id} label={option.description} value={option.id} style={{ color: 'black' }}/>
-          ))}
-        </Picker>
 
-          {/* <Text style={{ color: 'black' }}>Date Needed: {dateNeeded.toISOString().split('T')[0]}</Text> */}
-          <Text style={{ color: 'black' }}>Date Needed: {dateNeeded ? dateNeeded.toISOString().split('T')[0] : 'Select Date'}</Text>
-          <Button title="Date Needed" onPress={() => setOpen(true)} />
-          <DatePicker
-            modal
-            open={open}
-            //date={new Date(dateNeeded.getTime() - (480 * 60000))}
-            date={dateNeeded || new Date()} // Use new Date() if dateNeeded is null
-            mode="date"
-            onConfirm={(dateNeeded) => {
-              setOpen(false);
-              setDateNeeded(dateNeeded);
-            }}
-            onCancel={() => {
-              setOpen(false);
-            }}
+            <SectionedMultiSelect
+        items={options}
+              uniqueKey="id"
+              onSelectedItemsChange={(selectedOptionId) => setSelectedOption(selectedOptionId[0])}
+              selectedItems={[selectedOption]}
+              selectText="Do you need an operator?"
+              searchInputPlaceholderText=""
+              searchPlaceholderText="Search Equipment Sources"
+              displayKey="description"
+              single
+              styles={{
+                searchTextInput: {
+                  color: 'black'
+                },
+              }}
+              IconRenderer={Icon}
+              iconStyle={styles.iconStyle}
+            >
+              {options.map((option) => (
+                <Picker.Item
+                  key={option.id}
+                  label={option.description}
+                  value={option.id}
+                  style={{ color: 'black' }}
+                />
+              ))}
+            </SectionedMultiSelect>
+
+
+            {/* <Text style={styles.dateLabel}>Date Needed: {dateNeeded ? dateNeeded.toISOString().split('T')[0] : 'Select Date'}</Text> */}
+            <View style={styles.buttonContainer}>
+            <Button
+        title={`Date Needed: ${dateNeeded ? dateNeeded.toISOString().split('T')[0] : 'Select Date'}`}
+        onPress={() => setOpen(true)}
+        style={styles.dateButton}
+      />
+            <DatePicker
+              modal
+              open={open}
+              date={dateNeeded || new Date()} // Use new Date() if dateNeeded is null
+              mode="date"
+              onConfirm={(dateNeeded) => {
+                setOpen(false);
+                setDateNeeded(dateNeeded);
+              }}
+              onCancel={() => {
+                setOpen(false);
+              }}
+            />
+            </View>
+        
+
+            {/* <Text style={styles.dateLabel}>Estimated Return Date: {dateReturn ? dateReturn.toISOString().split('T')[0] : 'Select Date'}</Text> */}
+            <View style={styles.buttonContainer}>
+            <Button 
+            title={`Estimated Return Date: ${dateReturn ? dateReturn.toISOString().split('T')[0] : 'Select Date'}`}
+            onPress={() => setOpenR(true)} style={styles.dateButton} />
+            <DatePicker
+              modal
+              open={openR}
+              date={dateReturn || new Date()} // Use new Date() if dateNeeded is null
+              mode="date"
+              onConfirm={(dateReturn) => {
+                setOpenR(false);
+                setDateReturn(dateReturn);
+              }}
+              onCancel={() => {
+                setOpenR(false);
+              }}
+            />
+            </View>
+       
+
+            {/* <Text style={styles.label}>Purpose:</Text> */}
+            <TextInput
+  placeholder="Purpose"
+  style={[styles.input, { height: 5 * 20 }]} // Adjust the height according to your font size and line height
+  multiline
+  numberOfLines={5}
+  textAlignVertical="top" // Align placeholder text to the top
+  value={purpose}
+  onChangeText={(text) => setPurpose(text)}
+/>
+
+
+
+            <TouchableOpacity
+              style={styles.submitButton}
+              onPress={handleSubmit}
+            >
+              <Text style={[styles.submitButtonText, { color: 'black' }]}>{isSubmitting ? 'Submitting...' : 'Submit'}</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#9Bd35A', '#689F38']}
           />
-
-          {/* <Text style={{ color: 'black' }}>Estimated Return Date: {dateReturn.toISOString().split('T')[0]}</Text> */}
-          <Text style={{ color: 'black' }}>Estimated Return Date: {dateReturn ? dateReturn.toISOString().split('T')[0] : 'Select Date'}</Text>
-          <Button title="Estimated Return Date" onPress={() => setOpenR(true)} />
-          <DatePicker
-            modal
-            open={openR}
-            //date={new Date(dateReturn.getTime() - (480 * 60000))}
-            date={dateReturn || new Date()} // Use new Date() if dateNeeded is null
-            mode="date"
-            onConfirm={(dateReturn) => {
-              setOpenR(false);
-              setDateReturn(dateReturn);
-            }}
-            onCancel={() => {
-              setOpenR(false);
-            }}
-          />
-
-          <Text style={styles.label}>Purpose:</Text>
-          <TextInput
-            style={styles.input}
-            value={purpose}
-            onChangeText={(text) => setPurpose(text)}
-          />
-
-          <TouchableOpacity
-            style={[styles.button/*, !isFormValid && styles.disabledButton*/]}
-            onPress={handleSubmit}
-            // disabled={!isFormValid || isSubmitting}
-          >
-            <Text style={styles.buttonText}>{isSubmitting ? 'Submitting...' : 'Submit'}</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-        />
-      }
-    />
+        }
+      />
     )}
-     </>
-  );
+  </>
+);
+
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 40,
+    backgroundColor: '#F5F5F5',
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 5,
+    padding: 20,
+    margin: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 5,
   },
   label: {
     fontSize: 16,
-    marginBottom: 5,
-    color: 'black',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 15,
-  },
-  datePicker: {
-    marginBottom: 15,
+    fontWeight: 'bold',
+    color: '#333333',
+    marginBottom: 10,
   },
   multiSelect: {
-    marginBottom: 15,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#CCCCCC',
+  },
+  picker: {
+    height: 50,
+    width: '100%',
+    borderColor: '#CCCCCC',
+    borderWidth: 1,
+    borderRadius: 5,
+    marginBottom: 20,
+  },
+  dateLabel: {
+    color: 'black',
+    marginBottom: 10,
+  },
+  dateButton: {
+    backgroundColor: '#4CAF50',
+    color: '#FFFFFF',
+    marginBottom: 20,
+    margin: 10, 
+    padding: 100
+  },
+  input: {
+    height: 40,
+    borderColor: '#CCCCCC',
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingLeft: 10,
+    marginBottom: 20,
   },
   button: {
-    backgroundColor: 'blue',
-    padding: 25,
+    backgroundColor: '#4CAF50',
+    padding: 10,
     borderRadius: 5,
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 50,
   },
   buttonText: {
-    color: 'white',
-    fontSize: 16,
+    color: '#FFFFFF',
+    textAlign: 'center',
   },
-  disabledButton: {
-    backgroundColor: 'gray', // Apply disabled style
+  submitButton: {
+    backgroundColor: '#2196f3',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  submitButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ffffff',
+  },
+  buttonContainer: {
+    marginBottom: 20, // or any other value as per your preference
+    borderRadius: 10, // Add border radius here
+    overflow: 'hidden', // Ensure children don't overflow the rounded corners
   },
 });
+
 
 export default RequestToolScreen;
