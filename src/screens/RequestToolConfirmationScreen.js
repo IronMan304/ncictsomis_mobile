@@ -4,10 +4,14 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
 const RequestToolConfirmationScreen = ({ onClose }) => {
+  const handleOnClose = () => {
+    onClose(); // Close the confirmation screen
+    //onRefetch(); // Refetch data
+  };
   return (
     <View style={styles.container}>
       <Text style={styles.confirmationText}>Equipment Request submitted successfully!</Text>
-      <TouchableOpacity style={styles.okButton} onPress={onClose}>
+      <TouchableOpacity style={styles.okButton} onPress={handleOnClose}>
         <Text style={styles.okButtonText}>OK</Text>
       </TouchableOpacity>
     </View>

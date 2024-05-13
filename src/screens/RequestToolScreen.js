@@ -27,29 +27,32 @@ const RequestToolScreen = () => {
   const [options, setOptions] = useState([]); // State to store options
   const [showConfirmation, setShowConfirmation] = useState(false); // State to control displaying confirmation
 
-  // Function to fetch tools
-  const fetchTools = async () => {
-    try {
-      const response = await axios.get(`${BASE_URL}/requests`, {
-        headers: {
-          'Authorization': `Bearer ${userInfo.token}`,
-        },
-      });
+  useEffect(() => {
+    const fetchTools = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/requests`, {
+          headers: {
+            'Authorization': `Bearer ${userInfo.token}`,
+          },
+        });
 
-      const borrowerPositionId = response.data.borrower.position_id;
-      const filteredTools = response.data.tools.filter((tool) =>
-        tool.position_keys.some((key) => key.position_id === borrowerPositionId)
-      );
+        const borrowerPositionId = response.data.borrower.position_id;
+        const filteredTools = response.data.tools.filter((tool) =>
+          tool.position_keys.some((key) => key.position_id === borrowerPositionId)
+        );
 
-      const toolsWithCombinedString = filteredTools.map((tool) => ({
-        ...tool,
-        combinedString: `${tool.category.description}(${tool.type.description}): ${tool.property_number} (${tool.status.description})`,
-      }));
-      setTools(toolsWithCombinedString);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+        const toolsWithCombinedString = filteredTools.map((tool) => ({
+          ...tool,
+          combinedString: `${tool.category.description}(${tool.type.description}): ${tool.property_number} (${tool.status.description})`,
+        }));
+        setTools(toolsWithCombinedString);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchTools();
+  }, [userInfo.token]);
 
     // Function to fetch options
     const fetchOptions = async () => {
@@ -67,7 +70,7 @@ const RequestToolScreen = () => {
     };
   
     useEffect(() => {
-      fetchTools();
+      // fetchTools();
       fetchOptions();
     }, [userInfo.token]);
 
@@ -106,56 +109,47 @@ const RequestToolScreen = () => {
   
     try {
       const token = userInfo.token;
-      // await axios.post(`${BASE_URL}/requests`, data, {
-      //   headers: {
-      //     'Authorization': `Bearer ${token}`,
-      //   },
-      // });
-
-            // Example using Axios for the API request
+  
       // Example using Axios for the API request
       axios.post(`${BASE_URL}/requests`, data, {
-        headers: {
-            'Authorization': `Bearer ${token}`,
-        },
+          headers: {
+              'Authorization': `Bearer ${token}`,
+          },
       })
       .then(function (response) {
-        // Upon successful response, trigger Livewire events or actions
-        if (response.status === 201) {
-            // Assuming 'refreshParentRequest' and 'refreshTable' are Livewire events
-            // Livewire.emit('refreshParentRequest');
-            // Livewire.emit('refreshTable');
-        } else {
-            console.error('Request failed:', response.data);
-        }
+          // Upon successful response, trigger Livewire events or actions
+          if (response.status === 201) {
+              setShowConfirmation(true); // Show confirmation page after successful submission
+              // Reset form fields
+              setPurpose('');
+              setSelectedOption([]);
+              setDateNeeded(null); // Reset dateNeeded
+              setDateReturn(null); // Reset dateReturn
+              setSelectedItems([]);
+              setIsSubmitting(false);
+              // Refresh tools
+              fetchTools();
+          } else {
+              console.error('Request failed:', response.data);
+              Alert.alert('Error', 'Failed to submit request. Please try again.');
+          }
       })
       .catch(function (error) {
-        console.error('Error:', error);
+          console.error('Error:', error);
+          if (error.response && error.response.status === 400) {
+              Alert.alert('Error', 'All selected tools must be In Stock (Please refresh the screen before requesting)');
+          } else {
+              Alert.alert('Error', 'Failed to submit request. Please try again.');
+          }
+          setIsSubmitting(false);
       });
-
-      setShowConfirmation(true); // Show confirmation page after successful submission
   
-    // Reset form fields
-      setPurpose('');
-      setSelectedOption([]);
-      setDateNeeded(null); // Reset dateNeeded
-      setDateReturn(null); // Reset dateReturn
-      setSelectedItems([]);
-      setIsSubmitting(false);
-      //Alert.alert('Success', 'Request submitted successfully.');
-      //setShowConfirmation(true); // Show confirmation page
-
-      // Refresh tools
-    fetchTools();
-    } catch (error) {
-      setIsSubmitting(false);
+  } catch (error) {
       console.error(error);
-      if (error.response && error.response.status === 400) {
-        Alert.alert('Error', 'All selected tools must be In Stock (Please refresh the screen before requesting)');
-      } else {
-        Alert.alert('Error', 'Failed to submit request. Please try again.');
-      }
-    }
+      setIsSubmitting(false);
+      Alert.alert('Error', 'Failed to submit request. Please try again.');
+  }
+  
   };
   
   const handleConfirmationClose = () => {
@@ -168,28 +162,28 @@ const RequestToolScreen = () => {
     fetchTools().then(() => setRefreshing(false)); // once done, set refreshing to false
   };
 
-  // const fetchTools = async () => {
-  //   try {
-  //     const response = await axios.get(`${BASE_URL}/requests`, {
-  //       headers: {
-  //         'Authorization': `Bearer ${userInfo.token}`,
-  //       },
-  //     });
+  const fetchTools = async () => {
+    try {
+      const response = await axios.get(`${BASE_URL}/requests`, {
+        headers: {
+          'Authorization': `Bearer ${userInfo.token}`,
+        },
+      });
 
-  //     const borrowerPositionId = response.data.borrower.position_id;
-  //     const filteredTools = response.data.tools.filter((tool) =>
-  //       tool.position_keys.some((key) => key.position_id === borrowerPositionId)
-  //     );
+      const borrowerPositionId = response.data.borrower.position_id;
+      const filteredTools = response.data.tools.filter((tool) =>
+        tool.position_keys.some((key) => key.position_id === borrowerPositionId)
+      );
 
-  //     const toolsWithCombinedString = filteredTools.map((tool) => ({
-  //       ...tool,
-  //       combinedString: `${tool.category.description}(${tool.type.description}): ${tool.property_number} (${tool.status.description})`,
-  //     }));
-  //     setTools(toolsWithCombinedString);
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // };
+      const toolsWithCombinedString = filteredTools.map((tool) => ({
+        ...tool,
+        combinedString: `${tool.category.description}(${tool.type.description}): ${tool.property_number} (${tool.status.description})`,
+      }));
+      setTools(toolsWithCombinedString);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const enabledTools = tools.filter(tool => tool.status_id === 1);
   // Filter the disabled tools

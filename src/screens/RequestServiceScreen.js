@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, RefreshControl, Alert } from 'react-native';
 import axios from 'axios';
 import { Picker } from '@react-native-picker/picker';
 import { AuthContext } from '../context/AuthContext';
 import { BASE_URL } from '../config';
 import RequestServiceConfirmationScreen from './RequestServiceConfirmationScreen'; // Import the confirmation page component
-import Icon from 'react-native-vector-icons/Ionicons';
+// import Icon from 'react-native-vector-icons/Ionicons';
 import { useFocusEffect } from '@react-navigation/native'; // Import useFocusEffect hook
+import SectionedMultiSelect from 'react-native-sectioned-multi-select';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const RequestServiceScreen = () => {
   const [serviceRequests, setServiceRequests] = useState([]);
@@ -19,6 +21,8 @@ const RequestServiceScreen = () => {
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false); // State to control displaying confirmation
+  const [selectedItems, setSelectedItems] = useState([]); // State to store selected tools
+  const [refreshing, setRefreshing] = useState(false); // State for pull-to-refresh
 
   const [newRequest, setNewRequest] = useState({
     brand: '',
@@ -42,36 +46,67 @@ const RequestServiceScreen = () => {
         },
       });
       setSources(response.data.sources);
-      setTools(response.data.tools);
+      //setTools(response.data.tools);
       setServices(response.data.services);
     } catch (error) {
       console.error('Error fetching sources:', error);
     }
   };
 
+    // Function to fetch tools
+    const fetchTools = async () => {
+      try {
+        const response = await axios.get(`${BASE_URL}/requests`, {
+          headers: {
+            'Authorization': `Bearer ${userInfo.token}`,
+          },
+        });
+  
+        const borrowerPositionId = response.data.borrower.position_id;
+        const filteredTools = response.data.tools.filter((tool) =>
+          tool.position_keys.some((key) => key.position_id === borrowerPositionId)
+        );
+  
+        const toolsWithCombinedString = response.data.tools.map((tool) => ({
+          ...tool,
+          combinedString: `${tool.category.description}(${tool.type.description}): ${tool.property_number} (${tool.status.description})`,
+        }));
+        setTools(toolsWithCombinedString);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
   useFocusEffect(
     React.useCallback(() => {
       fetchSources();
+      fetchTools();
     }, [])
   );
 
   const handleInputChange = (key, value) => {
-    setNewRequest({ ...newRequest, [key]: value });
+    // Reset the tool_id when the source_id changes
+    if (key === 'source_id') {
+      setNewRequest({ ...newRequest, [key]: value, tool_id: '' });
+    } else {
+      setNewRequest({ ...newRequest, [key]: value });
+    }
   };
+  
 
   const handleSubmit = async () => {
     try {
       if (!newRequest.source_id || !newRequest.tool_id) {
-        setError('Please select source and tool before submitting');
+        Alert.alert('Error', 'Please select source and tool before submitting');
         return;
       }
-
+  
       await axios.post(`${BASE_URL}/service_requests`, newRequest, {
         headers: {
           'Authorization': `Bearer ${userInfo.token}`,
         },
       });
-
+  
       // Reset the form after submission
       setNewRequest({
         brand: '',
@@ -82,18 +117,27 @@ const RequestServiceScreen = () => {
         source_id: '',
         tool_id: '',
       });
-      // setSuccessMessage('Request submitted successfully.');
       setError(null);
       setShowConfirmation(true); // Show confirmation page
     } catch (error) {
       console.error('Error submitting service request:', error);
-      setError('Failed to submit request. Please try again.');
-      //setSuccessMessage(null);
+      if (error.response && error.response.status === 400) {
+        Alert.alert('Error', 'All selected tools must be In Stock (Please refresh the screen before requesting)');
+      } else {
+        Alert.alert('Error', 'Failed to submit request. Please try again.');
+      }
     }
   };
+  
 
   const handleConfirmationClose = () => {
     setShowConfirmation(false); // Close confirmation page
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true); // set refreshing to true to show spinner
+    // Your refresh logic here, e.g., refetch tools data
+    fetchTools().then(() => setRefreshing(false)); // once done, set refreshing to false
   };
 
   const renderItem = ({ item }) => (
@@ -119,11 +163,16 @@ const RequestServiceScreen = () => {
     const isInStock = tool.status_id === 1; // Check if the tool is in stock
     return (isPersonal || isOwnedByUser || isSourceCICTSO) && tool.source_id === newRequest.source_id;
   });
-
+  const enabledTools = filteredTools.filter(tool => tool.status_id === 1);
+  // Filter the disabled tools
+const disabledTools = filteredTools.filter(tool => tool.status_id !== 1);
   return (
     <View style={styles.container}>
       {showConfirmation ? (
-        <RequestServiceConfirmationScreen onClose={handleConfirmationClose} />
+        // <RequestServiceConfirmationScreen onClose={handleConfirmationClose} />
+        // Inside the return statement, where you render the confirmation screen
+        <RequestServiceConfirmationScreen onClose={handleConfirmationClose} onRefetch={fetchTools} />
+
       ) : (
         <View style={styles.formContainer}>
           {/* <Text style={[styles.requestText, { color: 'black' }]}>Barcode: {userInfo.user.borrower.user_id}</Text> */}
@@ -138,11 +187,12 @@ const RequestServiceScreen = () => {
               <Picker.Item key={source.id} label={source.description} value={source.id} style={{ color: 'black' }} />
             ))}
           </Picker>
-          <Picker
+          {/* <Picker
             selectedValue={newRequest.tool_id}
             style={styles.picker}
             onValueChange={(itemValue) => handleInputChange('tool_id', itemValue)}
           >
+      
             <Picker.Item label="Select Tool" value="" style={{ color: 'black' }} />
             {filteredTools.map((tool) => (
               <Picker.Item
@@ -153,21 +203,69 @@ const RequestServiceScreen = () => {
                 style={{ color: tool.status_id === 1 ? 'black' : 'gray' }} // Change color for disabled items
               />
             ))}
-          </Picker>
+          </Picker> */}
+          <SectionedMultiSelect
+           items={[...enabledTools, ...disabledTools.map(tool => ({ ...tool, disabled: true }))]}
+           uniqueKey="id"
+           onSelectedItemsChange={(selectedItemId) => handleInputChange('tool_id', selectedItemId[0])}
+           //      
+           selectedItems={[newRequest.tool_id]}
+           selectText="Select Equipment to be Repaired"
+           searchInputPlaceholderText=""
+           searchPlaceholderText='Search Available Equipments'
+           displayKey="combinedString"
+           styles={{
+            searchTextInput: {
+              color: 'black'
+            },
+            searchIcon: {
+              color: "black", // Change the color of the search icon to black
+            },
+            chipIcon: {
+              color: "black", // Change the color of the chips icon to black
+            },
+            arrowIcon: {
+              color: "black", // Change the color of the arrow icon to black
+            },
+            removeIcon: {
+              color: "black", // Change the color of the remove icon to black
+            },
+            searchIconContainer: {
+              backgroundColor: "transparent", // Set the background color of the search icon container to transparent
+            },
+           }}
+           IconRenderer={Icon}
+           single
+           iconStyle={styles.iconStyle}
+          />
           <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
             <Text style={[styles.submitButtonText, { color: 'black' }]}>Submit</Text>
           </TouchableOpacity>
           {/* Inside the return statement, after the TouchableOpacity for submission button */}
           {error && <Text style={{ color: 'red' }}>{error}</Text>}
           {/* {successMessage && <Text style={{ color: 'green' }}>{successMessage}</Text>} */}
+          
         </View>
+        
       )}
-      <FlatList
-        data={serviceRequests}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderItem}
-        contentContainerStyle={styles.listContainer}
+     <FlatList
+      data={serviceRequests}
+      keyExtractor={(item) => item.id.toString()}
+      renderItem={renderItem}
+      contentContainerStyle={styles.listContainer}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={['#2196f3']} // Color of the refresh indicator
+          tintColor={'#2196f3'} // Color of the refresh indicator on iOS
+          progressBackgroundColor={'#ffffff'} // Background color of the refresh indicator
+          title="Pull to refresh" // Text displayed while pulling down to refresh
+          titleColor="#2196f3" // Text color of the refresh indicator
+        />
+       }
       />
+
     </View>
   );
 };
@@ -241,6 +339,18 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingBottom: 20,
+  },
+  multiSelect: {
+    marginBottom: 15,
+    // width: '10%', // Set to 100% to occupy full width
+    // maxHeight: 200, // Set the max height to limit the dropdown size
+    // borderWidth: 1, // Add border for better visibility
+    // borderColor: '#ccc', // Border color
+    // borderRadius: 5, // Border radius
+    // height: '50%'
+  },
+  iconStyle: {
+    color: 'black',
   },
 });
 
